@@ -1,0 +1,34 @@
+services:
+    db:
+        image: postgres
+        container_name: postgres
+        environment:
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+            POSTGRES_HOST_AUTH_METHOD: trust
+            POSTGRES_DB: postgres
+        ports:
+            - '5432:5432'
+        restart: unless-stopped
+        env_file:
+            - path: .env
+              required: false
+            - path: .env.local
+              required: false
+
+    stripe-listener:
+        image: stripe/stripe-cli
+        command:
+            [
+                'listen',
+                '--forward-to',
+                'http://host.docker.internal:3000/api/stripe/webhooks',
+            ]
+        environment:
+            STRIPE_API_KEY: ${STRIPE_SECRET_KEY}
+        volumes:
+            - ~/.config/stripe:/root/.config/stripe
+        env_file:
+            - path: .env
+              required: false
+            - path: .env.local
+              required: false
